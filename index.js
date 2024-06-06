@@ -16,7 +16,7 @@ app.use(express.json());
 //mongodb
 
 
-const { MongoClient, ServerApiVersion, Timestamp } = require('mongodb');
+const { MongoClient, ServerApiVersion, Timestamp, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.omy4kgv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -40,6 +40,12 @@ app.get('/users', async (req,res)=>{
     const result = await userCollection.find().toArray()
     res.send(result)
 })
+app.get('/user/:email', async (req,res)=>{
+  const email = req.params.email
+    const result = await userCollection.findOne({email})
+    res.send(result)
+})
+
 
 app.put('/users', async(req,res)=>{
     const user = req.body;
@@ -60,6 +66,26 @@ app.put('/users', async(req,res)=>{
     res.send(result)
 })
 
+app.delete('/user/:id',async(req,res)=>{
+  const id = req.params.id;
+  const query = {_id: new ObjectId(id)}
+  const result = await userCollection.deleteOne(query)
+  res.send(result)
+})
+
+app.patch('/user/:id',async(req,res)=>{
+  const id = req.params.id;
+  const {role }= req.body;
+  const filter = {_id: new ObjectId(id)}
+  console.log(role,filter)
+  const updateDoc = {
+    $set: {
+      role: role
+    },
+  };
+  const result = await userCollection.updateOne(filter,updateDoc)
+  res.send(result)
+})
 
 
     // Send a ping to confirm a successful connection
