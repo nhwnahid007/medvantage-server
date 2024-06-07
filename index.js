@@ -35,6 +35,7 @@ async function run() {
 
     const userCollection = client.db('medvantage').collection('users')
     const categoryCollection = client.db('medvantage').collection('categories')
+    const medicineCollection = client.db('medvantage').collection('medicines')
 
 
 app.get('/users', async (req,res)=>{
@@ -117,6 +118,11 @@ app.patch('/updateUser/:email',async(req,res)=>{
 app.get('/categories',async(req,res)=>{
   
   const result = await categoryCollection.find().toArray()
+  res.send(result)
+})
+app.get('/medicines',async(req,res)=>{
+  
+  const result = await medicineCollection.find().toArray()
   res.send(result)
 })
 
