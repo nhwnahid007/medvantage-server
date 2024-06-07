@@ -34,6 +34,7 @@ async function run() {
     await client.connect();
 
     const userCollection = client.db('medvantage').collection('users')
+    const categoryCollection = client.db('medvantage').collection('categories')
 
 
 app.get('/users', async (req,res)=>{
@@ -112,6 +113,13 @@ app.patch('/updateUser/:email',async(req,res)=>{
   const result = await userCollection.updateOne(filter,updateDoc)
   res.send(result)
 })
+
+app.get('/categories',async(req,res)=>{
+  
+  const result = await categoryCollection.find().toArray()
+  res.send(result)
+})
+
 
 
     // Send a ping to confirm a successful connection
