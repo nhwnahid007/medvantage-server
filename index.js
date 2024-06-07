@@ -98,6 +98,20 @@ app.patch('/user/:email',async(req,res)=>{
   const result = await userCollection.updateOne(filter,updateDoc)
   res.send(result)
 })
+app.patch('/updateUser/:email',async(req,res)=>{
+  const email = req.params.email;
+  const { name, photoUrl } = req.body;
+  const filter = {email: email}
+  const updateDoc = {
+    $set: {
+      name: name,
+      photoUrl:photoUrl
+      
+    },
+  };
+  const result = await userCollection.updateOne(filter,updateDoc)
+  res.send(result)
+})
 
 
     // Send a ping to confirm a successful connection
