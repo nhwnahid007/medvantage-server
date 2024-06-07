@@ -126,6 +126,12 @@ app.get('/medicines',async(req,res)=>{
   res.send(result)
 })
 
+app.get("/medicineByCategory", async (req, res) => {
+  const categoryName = req.query.categoryName;
+  const query = { categoryName: categoryName };
+  const result = await medicineCollection.find(query).toArray();
+  res.send(result);
+});
 
 
     // Send a ping to confirm a successful connection
