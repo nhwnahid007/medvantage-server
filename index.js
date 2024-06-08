@@ -154,7 +154,7 @@ async function run() {
       const filter = { email: email };
       const updateDoc = {
         $set: {
-          role: role,
+            role: role,
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc);
@@ -178,10 +178,36 @@ async function run() {
       const result = await categoryCollection.find().toArray();
       res.send(result);
     });
+
+    //Medicines
     app.get("/medicines", async (req, res) => {
       const result = await medicineCollection.find().toArray();
       res.send(result);
     });
+
+    app.post('/medicines',async (req,res)=>{
+      const medicine = req.body;
+      const result = await medicineCollection.insertOne(medicine)
+      res.send(result)
+    })
+
+
+    app.get("/medicines/seller", async (req, res) => {
+      try {
+          const email = req.query.email;
+          if (!email) {
+              return res.status(400).send({ error: "Email query parameter is required" });
+          }
+          const query = { email: email };
+          const result = await medicineCollection.find(query).toArray();
+          res.send(result);
+      } catch (error) {
+          console.error("Error fetching medicines:", error);
+          res.status(500).send({ error: "An error occurred while fetching medicines" });
+      }
+  });
+
+
 
     app.get("/medicineByCategory", async (req, res) => {
       const categoryName = req.query.categoryName;
@@ -235,6 +261,8 @@ async function run() {
       const result = await cartCollection.deleteMany(query);
       res.send(result);
     });
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
