@@ -36,6 +36,7 @@ async function run() {
     const userCollection = client.db('medvantage').collection('users')
     const categoryCollection = client.db('medvantage').collection('categories')
     const medicineCollection = client.db('medvantage').collection('medicines')
+    const cartCollection = client.db('medvantage').collection('carts')
 
 
 app.get('/users', async (req,res)=>{
@@ -132,6 +133,61 @@ app.get("/medicineByCategory", async (req, res) => {
   const result = await medicineCollection.find(query).toArray();
   res.send(result);
 });
+
+//carts collection 
+
+app.post('/carts',async(req,res)=>{
+  const cartItem = req.body;
+  const result = await cartCollection.insertOne(cartItem)
+  res.send(result)
+})
+
+
+ app.get("/carts", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // Update cart item quantity
+app.put("/carts/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedItem = req.body;
+  const query = { _id: new ObjectId(id) };
+  const updateDoc = {
+    $set: {
+      quantity: updatedItem.quantity
+    }
+  };
+  const result = await cartCollection.updateOne(query, updateDoc);
+  res.send(result);
+});
+
+// Remove specific cart item
+app.delete("/carts/:id", async (req, res) => {
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await cartCollection.deleteOne(query);
+  res.send(result);
+});
+
+// // Clear all cart items for a specific user
+// app.delete("/carts/clear", async (req, res) => {
+//   const email = req.query.email;
+//   const query = { email: email };
+//   const result = await cartCollection.deleteMany(query);
+//   res.send(result);
+// });
+
+
+app.delete("/carts/", async (req, res) => {
+  const email = req.query.email;
+  const query = { email: email };
+  const result = await cartCollection.deleteMany(query);
+  res.send(result);
+});
+
 
 
     // Send a ping to confirm a successful connection
