@@ -3,6 +3,9 @@ const cors = require("cors");
 var jwt = require("jsonwebtoken");
 require("dotenv").config();
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -39,6 +42,9 @@ async function run() {
     const categoryCollection = client.db("medvantage").collection("categories");
     const medicineCollection = client.db("medvantage").collection("medicines");
     const cartCollection = client.db("medvantage").collection("carts");
+
+    const paymentCollection = client.db("medvantage").collection("payments");
+
 
     //jwt related api
 
@@ -174,6 +180,10 @@ async function run() {
       res.send(result);
     });
 
+    //categories
+
+   
+
     app.get("/categories", async (req, res) => {
       const result = await categoryCollection.find().toArray();
       res.send(result);
@@ -191,6 +201,13 @@ async function run() {
       res.send(result)
     })
 
+
+    app.delete("/medicine/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await medicineCollection.deleteOne(query);
+      res.send(result);
+    });
 
     app.get("/medicines/seller", async (req, res) => {
       try {
@@ -261,6 +278,26 @@ async function run() {
       const result = await cartCollection.deleteMany(query);
       res.send(result);
     });
+
+
+    //payment intent
+
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(amount, 'amount inside the intent')
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card']
+      });
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    });
+
 
 
 
