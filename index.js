@@ -211,19 +211,19 @@ async function run() {
 
     app.get("/medicines/seller", async (req, res) => {
       try {
-          const email = req.query.email;
-          if (!email) {
-              return res.status(400).send({ error: "Email query parameter is required" });
-          }
-          const query = { email: email };
-          const result = await medicineCollection.find(query).toArray();
-          res.send(result);
+        const sellerEmail = req.query.sellerEmail; // Corrected variable name
+        if (!sellerEmail) {
+          return res.status(400).send({ error: "sellerEmail query parameter is required" }); // Corrected error message
+        }
+        const query = { sellerEmail: sellerEmail }; // Or simply { sellerEmail }, since the property name and variable name match
+        const result = await medicineCollection.find(query).toArray();
+        res.send(result);
       } catch (error) {
-          console.error("Error fetching medicines:", error);
-          res.status(500).send({ error: "An error occurred while fetching medicines" });
+        console.error("Error fetching medicines:", error);
+        res.status(500).send({ error: "An error occurred while fetching medicines" });
       }
-  });
-
+    });
+    
 
 
     app.get("/medicineByCategory", async (req, res) => {
@@ -242,8 +242,8 @@ async function run() {
     });
 
     app.get("/carts", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
+      const buyerEmail = req.query.buyerEmail;
+      const query = { buyerEmail: buyerEmail};
       const result = await cartCollection.find(query).toArray();
       res.send(result);
     });
@@ -314,7 +314,14 @@ async function run() {
       res.send({paymentResult,deleteResult})
     })
 
-    
+    app.get('/payments/:email', verifyToken, async (req, res) => {
+      const query = { buyerEmail: req.params.email }
+      if (req.params.email !== req.decoded.email) {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    })
     
 
 
