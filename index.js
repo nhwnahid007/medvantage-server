@@ -3,8 +3,7 @@ const cors = require("cors");
 var jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -44,7 +43,6 @@ async function run() {
     const cartCollection = client.db("medvantage").collection("carts");
 
     const paymentCollection = client.db("medvantage").collection("payments");
-
 
     //jwt related api
 
@@ -160,7 +158,7 @@ async function run() {
       const filter = { email: email };
       const updateDoc = {
         $set: {
-            role: role,
+          role: role,
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc);
@@ -182,8 +180,6 @@ async function run() {
 
     //categories
 
-   
-
     app.get("/categories", async (req, res) => {
       const result = await categoryCollection.find().toArray();
       res.send(result);
@@ -195,12 +191,11 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/medicines',async (req,res)=>{
+    app.post("/medicines", async (req, res) => {
       const medicine = req.body;
-      const result = await medicineCollection.insertOne(medicine)
-      res.send(result)
-    })
-
+      const result = await medicineCollection.insertOne(medicine);
+      res.send(result);
+    });
 
     app.delete("/medicine/:id", verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
@@ -213,18 +208,20 @@ async function run() {
       try {
         const sellerEmail = req.query.sellerEmail; // Corrected variable name
         if (!sellerEmail) {
-          return res.status(400).send({ error: "sellerEmail query parameter is required" }); // Corrected error message
+          return res
+            .status(400)
+            .send({ error: "sellerEmail query parameter is required" }); // Corrected error message
         }
         const query = { sellerEmail: sellerEmail }; // Or simply { sellerEmail }, since the property name and variable name match
         const result = await medicineCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.error("Error fetching medicines:", error);
-        res.status(500).send({ error: "An error occurred while fetching medicines" });
+        res
+          .status(500)
+          .send({ error: "An error occurred while fetching medicines" });
       }
     });
-    
-
 
     app.get("/medicineByCategory", async (req, res) => {
       const categoryName = req.query.categoryName;
@@ -243,7 +240,7 @@ async function run() {
 
     app.get("/carts", async (req, res) => {
       const buyerEmail = req.query.buyerEmail;
-      const query = { buyerEmail: buyerEmail};
+      const query = { buyerEmail: buyerEmail };
       const result = await cartCollection.find(query).toArray();
       res.send(result);
     });
@@ -279,52 +276,59 @@ async function run() {
       res.send(result);
     });
 
-
     //payment intent
 
-    app.post('/create-payment-intent', async (req, res) => {
+    app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
-      console.log(amount, 'amount inside the intent')
+      console.log(amount, "amount inside the intent");
 
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
-        currency: 'usd',
-        payment_method_types: ['card']
+        currency: "usd",
+        payment_method_types: ["card"],
       });
 
       res.send({
-        clientSecret: paymentIntent.client_secret
-      })
+        clientSecret: paymentIntent.client_secret,
+      });
     });
 
-    app.post('/payments', async (req, res) => {
+    app.post("/payments", async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
 
       //  carefully delete each item from the cart
-      console.log('payment info', payment);
+      console.log("payment info", payment);
       const query = {
         _id: {
-          $in: payment.cartIds.map(id => new ObjectId(id) )
-        }
+          $in: payment.cartIds.map((id) => new ObjectId(id)),
+        },
       };
 
-      const deleteResult = await cartCollection.deleteMany(query)
-      res.send({paymentResult,deleteResult})
-    })
+      const deleteResult = await cartCollection.deleteMany(query);
+      res.send({ paymentResult, deleteResult });
+    });
 
-    app.get('/payments/:email', verifyToken, async (req, res) => {
-      const query = { buyerEmail: req.params.email }
+    app.get("/payments/:email", verifyToken, async (req, res) => {
+      const query = { buyerEmail: req.params.email };
       if (req.params.email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' });
+        return res.status(403).send({ message: "forbidden access" });
       }
       const result = await paymentCollection.find(query).toArray();
       res.send(result);
-    })
-    
+    });
 
-
+    app.get("/invoice/:transactionId", async (req, res) => {
+      const id = req.params.transactionId;
+      try {
+        const result = await paymentCollection.findOne({ transactionId: id });
+        res.send(result);
+      } catch (error) {
+        console.error(error);
+        res.status(500).send("Error fetching invoice");
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
