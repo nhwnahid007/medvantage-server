@@ -294,7 +294,31 @@ async function run() {
       });
     });
 
-    app.post("/payments", async (req, res) => {
+    app.get('/payments',async(req,res)=>{
+     
+      const result  = await paymentCollection.find().toArray()
+      res.send(result)
+    })
+    app.patch('/payment/:id', async (req, res) => {
+      const id = req.params.id;
+      const { status } = req.body; // Extract status from request body
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: status // Update status field with the extracted value
+        }
+      };
+      try {
+        const result = await paymentCollection.updateOne(query, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating payment status:", error);
+        res.status(500).send({ error: "An error occurred while updating payment status" });
+      }
+    });
+    
+
+    app.post("/payments",verifyToken, async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
 
