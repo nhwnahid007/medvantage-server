@@ -185,6 +185,13 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/categories", async (req, res) => {
+      const category = req.body;
+      const result = await categoryCollection.insertOne(category);
+      res.send(result);
+    });
+
+
     //Medicines
     app.get("/medicines", async (req, res) => {
       const result = await medicineCollection.find().toArray();
