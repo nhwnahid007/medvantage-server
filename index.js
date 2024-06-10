@@ -391,6 +391,34 @@ async function run() {
     });
     
 
+    app.patch('/advertisement/:id', async(req,res)=>{
+
+      const id = req.params.id;
+      const { status } = req.body; // Extract status from request body
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: status // Update status field with the extracted value
+        }
+      };
+      try {
+        const result = await advertisementCollection.updateOne(query, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating Ad status:", error);
+        res.status(500).send({ error: "An error occurred while updating ad status" });
+      }
+
+    })
+
+
+    app.delete("/advertisement/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await advertisementCollection.deleteOne(query);
+      res.send(result);
+    });
+
 
 
 
