@@ -43,6 +43,7 @@ async function run() {
     const cartCollection = client.db("medvantage").collection("carts");
 
     const paymentCollection = client.db("medvantage").collection("payments");
+    const advertisementCollection = client.db("medvantage").collection("advertisements");
 
     //jwt related api
 
@@ -306,6 +307,8 @@ async function run() {
       const result  = await paymentCollection.find().toArray()
       res.send(result)
     })
+
+
     app.patch('/payment/:id', async (req, res) => {
       const id = req.params.id;
       const { status } = req.body; // Extract status from request body
@@ -360,6 +363,38 @@ async function run() {
         res.status(500).send("Error fetching invoice");
       }
     });
+
+    //advertisedment 
+
+    app.get('/advertisedment',async(req,res)=>{
+      const result = await advertisementCollection.find().toArray()
+      res.send(result)
+    })
+
+    app.get("/advertisementBySeller", async (req, res) => {
+      try {
+        const email = req.query.email;
+        
+        const query = { email: email };
+        const result = await advertisementCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching advertisement:", error);
+        res.status(500).send("Internal Server Error");
+      }
+    });
+
+    app.post("/advertisementBySeller", async (req, res) => {
+      const adItem = req.body;
+      const result = await advertisementCollection.insertOne(adItem);
+      res.send(result);
+    });
+    
+
+
+
+
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
