@@ -205,6 +205,57 @@ async function run() {
       res.send(result);
     });
 
+    app.patch('/medicines/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+        const {
+          name,
+          short_description,
+          generic_name,
+          image,
+          company,
+          mg,
+          unit_price,
+          discount,
+          categoryName,
+          sellerEmail
+        } = req.body;
+    
+        // Construct the query to find the medicine by its ID
+        const query = { _id: ObjectId(id) };
+    
+        // Construct the update document
+        const updateDoc = {
+          $set: {
+            name,
+            short_description,
+            generic_name,
+            image,
+            company,
+            mg,
+            unit_price,
+            discount,
+            categoryName,
+            sellerEmail
+          }
+        };
+    
+        // Update the medicine in the database
+        const result = await medicineCollection.updateOne(query, updateDoc);
+    
+        // Check if the medicine was found and updated successfully
+        if (result.matchedCount && result.modifiedCount) {
+          res.status(200).json({ message: "Medicine updated successfully" });
+        } else {
+          res.status(404).json({ error: "Medicine not found" });
+        }
+      } catch (error) {
+        console.error("Error updating medicine:", error);
+        res.status(500).json({ error: "An error occurred while updating medicine" });
+      }
+    });
+    
+
     app.delete("/medicine/:id", verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
