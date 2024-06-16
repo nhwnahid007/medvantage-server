@@ -10,7 +10,16 @@ const port = process.env.PORT || 5000;
 
 //middelware
 
-app.use(cors());
+const corsOptions = {
+  origin: [
+    "http://localhost:5173",
+    "https://medvantage-mv.web.app",
+    "https://medvantage-mv.firebaseapp.com",
+  ],
+
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 //mongodb
@@ -35,7 +44,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const userCollection = client.db("medvantage").collection("users");
     const categoryCollection = client.db("medvantage").collection("categories");
@@ -199,15 +208,35 @@ async function run() {
       res.send(result);
     });
 
+
+
+
+
+    app.get("/medicinesCount", async (req, res) => {
+      const count = await medicineCollection.estimatedDocumentCount()
+      res.send({count});
+    });
+
     app.post("/medicines", async (req, res) => {
       const medicine = req.body;
       const result = await medicineCollection.insertOne(medicine);
       res.send(result);
     });
 
-    app.patch('/medicines/:id', async (req, res) => {
+        app.get("/medicine/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+
+      const result = await medicineCollection.findOne(query)
+      res.send(result);
+    });
+
+
+    app.patch('/medicine/:id', async (req, res) => {
       try {
         const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+
         const {
           name,
           short_description,
@@ -222,7 +251,6 @@ async function run() {
         } = req.body;
     
         // Construct the query to find the medicine by its ID
-        const query = { _id: ObjectId(id) };
     
         // Construct the update document
         const updateDoc = {
@@ -242,20 +270,15 @@ async function run() {
     
         // Update the medicine in the database
         const result = await medicineCollection.updateOne(query, updateDoc);
-    
-        // Check if the medicine was found and updated successfully
-        if (result.matchedCount && result.modifiedCount) {
-          res.status(200).json({ message: "Medicine updated successfully" });
-        } else {
-          res.status(404).json({ error: "Medicine not found" });
-        }
+
+        res.send(result)
+  
       } catch (error) {
         console.error("Error updating medicine:", error);
         res.status(500).json({ error: "An error occurred while updating medicine" });
       }
     });
     
-
     app.delete("/medicine/:id", verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -473,13 +496,15 @@ async function run() {
 
 
 
+
+
     
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
