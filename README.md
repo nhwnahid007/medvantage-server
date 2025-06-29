@@ -38,7 +38,7 @@
     
     ```
 
-    Replace the placeholders (`mongodb_user` and `mongodb_pass`) with your actual MongoDB user credentials. and `ACCESS_TOKEN_SECRET` with hex token and `STRIPE_SECRET_KEY` with your stripe secret key
+    Replace the placeholders (`mongodb_user` and `mongodb_pass`) with your actual MongoDB user credentials. and `ACCESS_TOKEN_SECRET` with hex token and `STRIPE_SECRET_KEY` with your stripe secret key.
 
 5. **Run the Development Server:**
     ```bash
