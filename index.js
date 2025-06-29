@@ -16,7 +16,6 @@ const corsOptions = {
     "https://medvantage-mv.web.app",
     "https://medvantage-mv.firebaseapp.com",
   ],
-
 };
 
 app.use(cors(corsOptions));
@@ -50,9 +49,14 @@ async function run() {
     const categoryCollection = client.db("medvantage").collection("categories");
     const medicineCollection = client.db("medvantage").collection("medicines");
     const cartCollection = client.db("medvantage").collection("carts");
+    const sellerRequestCollection = client
+      .db("medvantage")
+      .collection("sellerRequests");
 
     const paymentCollection = client.db("medvantage").collection("payments");
-    const advertisementCollection = client.db("medvantage").collection("advertisements");
+    const advertisementCollection = client
+      .db("medvantage")
+      .collection("advertisements");
 
     //jwt related api
 
@@ -153,18 +157,29 @@ async function run() {
       const id = req.params.id;
       const { role } = req.body;
       const filter = { _id: new ObjectId(id) };
-      console.log(role, filter);
       const updateDoc = {
         $set: {
           role: role,
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc);
+
+      // If role is changed to user, delete the seller request entirely
+      if (role === "user") {
+        // Get the user's email to find their seller request
+        const user = await userCollection.findOne(filter);
+        if (user) {
+          const sellerRequestFilter = { userEmail: user.email };
+          await sellerRequestCollection.deleteOne(sellerRequestFilter);
+        }
+      }
+
       res.send(result);
     });
 
     app.patch("/user/:email", verifyToken, verifyAdmin, async (req, res) => {
       const email = req.params.email;
+      const { role } = req.body;
       const filter = { email: email };
       const updateDoc = {
         $set: {
@@ -172,6 +187,13 @@ async function run() {
         },
       };
       const result = await userCollection.updateOne(filter, updateDoc);
+
+      // If role is changed to user, delete the seller request entirely
+      if (role === "user") {
+        const sellerRequestFilter = { userEmail: email };
+        await sellerRequestCollection.deleteOne(sellerRequestFilter);
+      }
+
       res.send(result);
     });
     app.patch("/updateUser/:email", async (req, res) => {
@@ -201,20 +223,15 @@ async function run() {
       res.send(result);
     });
 
-
     //Medicines
     app.get("/medicines", async (req, res) => {
       const result = await medicineCollection.find().toArray();
       res.send(result);
     });
 
-
-
-
-
     app.get("/medicinesCount", async (req, res) => {
-      const count = await medicineCollection.estimatedDocumentCount()
-      res.send({count});
+      const count = await medicineCollection.estimatedDocumentCount();
+      res.send({ count });
     });
 
     app.post("/medicines", async (req, res) => {
@@ -223,16 +240,15 @@ async function run() {
       res.send(result);
     });
 
-        app.get("/medicine/:id", async (req, res) => {
+    app.get("/medicine/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) };
 
-      const result = await medicineCollection.findOne(query)
+      const result = await medicineCollection.findOne(query);
       res.send(result);
     });
 
-
-    app.patch('/medicine/:id', async (req, res) => {
+    app.patch("/medicine/:id", async (req, res) => {
       try {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
@@ -247,11 +263,11 @@ async function run() {
           unit_price,
           discount,
           categoryName,
-          sellerEmail
+          sellerEmail,
         } = req.body;
-    
+
         // Construct the query to find the medicine by its ID
-    
+
         // Construct the update document
         const updateDoc = {
           $set: {
@@ -264,21 +280,22 @@ async function run() {
             unit_price,
             discount,
             categoryName,
-            sellerEmail
-          }
+            sellerEmail,
+          },
         };
-    
+
         // Update the medicine in the database
         const result = await medicineCollection.updateOne(query, updateDoc);
 
-        res.send(result)
-  
+        res.send(result);
       } catch (error) {
         console.error("Error updating medicine:", error);
-        res.status(500).json({ error: "An error occurred while updating medicine" });
+        res
+          .status(500)
+          .json({ error: "An error occurred while updating medicine" });
       }
     });
-    
+
     app.delete("/medicine/:id", verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -376,33 +393,32 @@ async function run() {
       });
     });
 
-    app.get('/payments',async(req,res)=>{
-     
-      const result  = await paymentCollection.find().toArray()
-      res.send(result)
-    })
+    app.get("/payments", async (req, res) => {
+      const result = await paymentCollection.find().toArray();
+      res.send(result);
+    });
 
-
-    app.patch('/payment/:id', async (req, res) => {
+    app.patch("/payment/:id", async (req, res) => {
       const id = req.params.id;
       const { status } = req.body; // Extract status from request body
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          status: status // Update status field with the extracted value
-        }
+          status: status, // Update status field with the extracted value
+        },
       };
       try {
         const result = await paymentCollection.updateOne(query, updateDoc);
         res.send(result);
       } catch (error) {
         console.error("Error updating payment status:", error);
-        res.status(500).send({ error: "An error occurred while updating payment status" });
+        res
+          .status(500)
+          .send({ error: "An error occurred while updating payment status" });
       }
     });
-    
 
-    app.post("/payments",verifyToken, async (req, res) => {
+    app.post("/payments", verifyToken, async (req, res) => {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
 
@@ -438,17 +454,17 @@ async function run() {
       }
     });
 
-    //advertisedment 
+    //advertisedment
 
-    app.get('/advertisedment',async(req,res)=>{
-      const result = await advertisementCollection.find().toArray()
-      res.send(result)
-    })
+    app.get("/advertisedment", async (req, res) => {
+      const result = await advertisementCollection.find().toArray();
+      res.send(result);
+    });
 
     app.get("/advertisementBySeller", async (req, res) => {
       try {
         const email = req.query.email;
-        
+
         const query = { email: email };
         const result = await advertisementCollection.find(query).toArray();
         res.send(result);
@@ -463,28 +479,29 @@ async function run() {
       const result = await advertisementCollection.insertOne(adItem);
       res.send(result);
     });
-    
 
-    app.patch('/advertisement/:id', async(req,res)=>{
-
+    app.patch("/advertisement/:id", async (req, res) => {
       const id = req.params.id;
       const { status } = req.body; // Extract status from request body
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          status: status // Update status field with the extracted value
-        }
+          status: status, // Update status field with the extracted value
+        },
       };
       try {
-        const result = await advertisementCollection.updateOne(query, updateDoc);
+        const result = await advertisementCollection.updateOne(
+          query,
+          updateDoc
+        );
         res.send(result);
       } catch (error) {
         console.error("Error updating Ad status:", error);
-        res.status(500).send({ error: "An error occurred while updating ad status" });
+        res
+          .status(500)
+          .send({ error: "An error occurred while updating ad status" });
       }
-
-    })
-
+    });
 
     app.delete("/advertisement/:id", async (req, res) => {
       const id = req.params.id;
@@ -493,12 +510,121 @@ async function run() {
       res.send(result);
     });
 
+    // Seller Request APIs
+    app.post("/seller-requests", verifyToken, async (req, res) => {
+      try {
+        const requestData = req.body;
+        const userEmail = req.decoded.email;
 
+        // Check if user already has a pending request
+        const existingRequest = await sellerRequestCollection.findOne({
+          userEmail: userEmail,
+          status: "pending",
+        });
 
+        if (existingRequest) {
+          return res
+            .status(400)
+            .send({ message: "You already have a pending seller request" });
+        }
 
+        // Check if user is already a seller
+        const user = await userCollection.findOne({ email: userEmail });
+        if (user?.role === "seller") {
+          return res.status(400).send({ message: "You are already a seller" });
+        }
 
+        const newRequest = {
+          userEmail: userEmail,
+          userName: requestData.userName,
+          requestDate: new Date(),
+          status: "pending",
+          reason: requestData.reason || "",
+          ...requestData,
+        };
 
-    
+        const result = await sellerRequestCollection.insertOne(newRequest);
+        res.send(result);
+      } catch (error) {
+        console.error("Error creating seller request:", error);
+        res
+          .status(500)
+          .send({ error: "An error occurred while creating seller request" });
+      }
+    });
+
+    app.get("/seller-requests", verifyToken, verifyAdmin, async (req, res) => {
+      try {
+        const result = await sellerRequestCollection.find().toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching seller requests:", error);
+        res
+          .status(500)
+          .send({ error: "An error occurred while fetching seller requests" });
+      }
+    });
+
+    app.patch(
+      "/seller-requests/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        try {
+          const id = req.params.id;
+          const { status } = req.body;
+          const query = { _id: new ObjectId(id) };
+
+          const updateDoc = {
+            $set: {
+              status: status,
+              processedDate: new Date(),
+            },
+          };
+
+          const result = await sellerRequestCollection.updateOne(
+            query,
+            updateDoc
+          );
+
+          // If approved, update user role to seller
+          if (status === "approved") {
+            const request = await sellerRequestCollection.findOne(query);
+            if (request) {
+              const userFilter = { email: request.userEmail };
+              const userUpdateDoc = {
+                $set: {
+                  role: "seller",
+                },
+              };
+              await userCollection.updateOne(userFilter, userUpdateDoc);
+            }
+          }
+
+          res.send(result);
+        } catch (error) {
+          console.error("Error updating seller request:", error);
+          res
+            .status(500)
+            .send({ error: "An error occurred while updating seller request" });
+        }
+      }
+    );
+
+    app.get("/seller-requests/user", verifyToken, async (req, res) => {
+      try {
+        const userEmail = req.decoded.email;
+        const result = await sellerRequestCollection.findOne({
+          userEmail: userEmail,
+        });
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching user seller request:", error);
+        res
+          .status(500)
+          .send({ error: "An error occurred while fetching seller request" });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
