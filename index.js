@@ -262,7 +262,10 @@ async function run() {
 
     //Medicines
     app.get("/medicines", async (req, res) => {
-      const result = await medicineCollection.find().toArray();
+      const result = await medicineCollection
+        .find()
+        .sort({ date: -1 })
+        .toArray();
       res.send(result);
     });
 
@@ -349,7 +352,10 @@ async function run() {
             .send({ error: "sellerEmail query parameter is required" }); // Corrected error message
         }
         const query = { sellerEmail: sellerEmail }; // Or simply { sellerEmail }, since the property name and variable name match
-        const result = await medicineCollection.find(query).toArray();
+        const result = await medicineCollection
+          .find(query)
+          .sort({ date: -1 })
+          .toArray();
         res.send(result);
       } catch (error) {
         console.error("Error fetching medicines:", error);
@@ -362,7 +368,10 @@ async function run() {
     app.get("/medicineByCategory", async (req, res) => {
       const categoryName = req.query.categoryName;
       const query = { categoryName: categoryName };
-      const result = await medicineCollection.find(query).toArray();
+      const result = await medicineCollection
+        .find(query)
+        .sort({ date: -1 })
+        .toArray();
       res.send(result);
     });
 
