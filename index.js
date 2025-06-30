@@ -223,6 +223,43 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/categories/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const { categoryName, image } = req.body;
+
+        const updateDoc = {
+          $set: {
+            categoryName,
+            image,
+          },
+        };
+
+        const result = await categoryCollection.updateOne(query, updateDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating category:", error);
+        res
+          .status(500)
+          .json({ error: "An error occurred while updating category" });
+      }
+    });
+
+    app.delete("/categories/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await categoryCollection.deleteOne(query);
+        res.send(result);
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        res
+          .status(500)
+          .json({ error: "An error occurred while deleting category" });
+      }
+    });
+
     //Medicines
     app.get("/medicines", async (req, res) => {
       const result = await medicineCollection.find().toArray();
